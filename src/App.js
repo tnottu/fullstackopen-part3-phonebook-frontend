@@ -35,11 +35,26 @@ const App = () => {
     setNameFilter(event.target.value)
   }
 
-  const handleError = (person) => {
-    setNotification({
-      message: `Information of ${person.name} has already been removed from server`,
-      type: 'error',
-    })
+  const handleError = (error, person) => {
+    if (error.response.data) {
+      // Validation error
+      setNotification({
+        message: error.response.data.error,
+        type: 'error',
+      })
+    } else if (error.response.status === 404) {
+      // Error 404
+      setNotification({
+        message: `Information of ${person.name} has already been removed from server`,
+        type: 'error',
+      })
+    } else {
+      setNotification({
+        message: error.response.statusText,
+        type: 'error',
+      })
+    }
+
     setTimeout(() => {
       setNotification(null)
     }, 5000)
@@ -60,7 +75,7 @@ const App = () => {
           setNotification(null)
         }, 5000)
       })
-      .catch(() => handleError(person))
+      .catch(error => handleError(error, person))
   }
 
   const handleUpdate = (person, number) => {
@@ -75,7 +90,7 @@ const App = () => {
           setNotification(null)
         }, 5000)
       })
-      .catch(() => handleError(person))
+      .catch(error => handleError(error, person))
   }
 
   const handleSubmit = (event) => {
@@ -90,22 +105,23 @@ const App = () => {
       return
     }
 
-    const newPerson = {
+    const person = {
       name: newName,
       number: newNumber,
     };
 
     personService
-      .create(newPerson)
-      .then(person => {
-        setPersons([...persons, person])
+      .create(person)
+      .then(createdPerson => {
+        setPersons([...persons, createdPerson])
         setNewName('')
         setNewNumber('')
-        setNotification({ message: `Created ${person.name}` })
+        setNotification({ message: `Created ${createdPerson.name}` })
         setTimeout(() => {
           setNotification(null)
         }, 5000)
       })
+      .catch(error => handleError(error, person))
 
   }
 
